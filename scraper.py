@@ -8,13 +8,19 @@ LIMIT = 25
 DATA_DIR = "data"
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
-    "Accept": "application/json",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Cache-Control": "no-cache",
+    "Connection": "keep-alive",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
 }
 
 
 def fetch_posts(subreddit: str, limit: int = 25) -> list[dict]:
-    url = f"https://www.reddit.com/r/{subreddit}/hot.json?limit={limit}"
+    url = f"https://old.reddit.com/r/{subreddit}/hot.json?limit={limit}&raw_json=1"
     resp = requests.get(url, headers=HEADERS, timeout=15)
     resp.raise_for_status()
     children = resp.json()["data"]["children"]
