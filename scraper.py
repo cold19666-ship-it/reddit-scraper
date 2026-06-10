@@ -1,6 +1,7 @@
 import requests
 import json
 import os
+import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 
 SUBREDDITS = ["sidehustle", "entrepreneur", "smallbusiness", "passive_income", "beermoney"]
@@ -20,24 +21,35 @@ HEADERS = {
 
 
 def fetch_posts(subreddit: str, limit: int = 25) -> list[dict]:
-    url = f"https://old.reddit.com/r/{subreddit}/hot.json?limit={limit}&raw_json=1"
+    url = f"https://www.reddit.com/r/{subreddit}/.rss?limit={limit}"
     resp = requests.get(url, headers=HEADERS, timeout=15)
     resp.raise_for_status()
-    children = resp.json()["data"]["children"]
-    return [
-        {
-            "id": p["data"]["id"],
-            "title": p["data"]["title"],
-            "score": p["data"]["score"],
-            "url": p["data"]["url"],
-            "permalink": "https://reddit.com" + p["data"]["permalink"],
-            "num_comments": p["data"]["num_comments"],
-            "created_utc": p["data"]["created_utc"],
-            "author": p["data"]["author"],
-            "selftext": p["data"]["selftext"][:500] if p["data"]["selftext"] else "",
-        }
-        for p in children
-    ]
+
+    root = ET.fromstring(resp.text)
+    ns = {"atom": "http://www.w3.org/2005/Atom"}
+    entries = root.findall("atom:entry", ns)[:limit]
+
+    posts = []
+    for entry in entries:
+        title = entry.find("atom:title", ns)
+        link = entry.find("atom:link", ns)
+        author = entry.find("atom:author/atom:name", ns)
+        updated = entry.find("atom:updated", ns)
+        content = entry.find("atom:content", ns)
+
+        posts.append({
+            "id": link.get("href", "") if link is not None else "",
+            "title": title.text if title is not None else "",
+            "score": 0,  # RSS doesn't include score
+            "url": link.get("href", "") if link is not None else "",
+            "permalink": link.get("href", "") if link is not None else "",
+            "num_comments": 0,  # RSS doesn't include comments count
+            "created_utc": updated.text if updated is not None else "",
+            "author": author.text if author is not None else "unknown",
+            "selftext": (content.text or "")[:500] if content is not None else "",
+        })
+
+    return posts
 
 
 def save(subreddit: str, posts: list[dict]):
