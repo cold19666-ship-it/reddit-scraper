@@ -6,7 +6,11 @@ from datetime import datetime, timezone
 SUBREDDITS = ["sidehustle", "entrepreneur", "smallbusiness", "passive_income", "beermoney"]
 LIMIT = 25
 DATA_DIR = "data"
-HEADERS = {"User-Agent": "research-bot/1.0 (personal project)"}
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+    "Accept": "application/json",
+    "Accept-Language": "en-US,en;q=0.9",
+}
 
 
 def fetch_posts(subreddit: str, limit: int = 25) -> list[dict]:
@@ -57,4 +61,4 @@ if __name__ == "__main__":
             save(sub, posts)
         except Exception as e:
             print(f"[{sub}] 失败: {e}")
-            raise
+            # Continue with next subreddit, don't fail the whole run
